@@ -60,6 +60,7 @@ function add_new_user()
         'id' => '',
         'name_user' => '',
         'email_user' => '',
+        'password' => '',
         'photo_user' => ''
     );
     $dataFromUserCheck = count(array_intersect_key($_POST, $tableAtribute));
@@ -69,6 +70,7 @@ function add_new_user()
                   id = '$_POST[id]',
                   name_user = '$_POST[name_user]',
                   email_user = '$_POST[email_user]',
+                  password = '$_POST[password]',
                   photo_user = '$_POST[photo_user]'";
         $result = mysqli_query($connect, $query);
 
@@ -105,6 +107,7 @@ function update_user()
     $tableAtribute = array(
         'name_user' => '',
         'email_user' => '',
+        'password' => '',
         'photo_user' => ''
     );
     $dataFromUserCheck = count(array_intersect_key($_POST, $tableAtribute));
@@ -113,6 +116,7 @@ function update_user()
         $query = "UPDATE users SET
                   name_user = '$_POST[name_user]',
                   email_user = '$_POST[email_user]',
+                  password = '$_POST[password]',
                   photo_user = '$_POST[photo_user]' WHERE id = $id";
         $result = mysqli_query($connect, $query);
 
@@ -155,6 +159,62 @@ function delete_task()
             'status' => 0,
             'message' => 'delete data with id = ' .$id. ' failed'
         );
+    }
+
+    header('Content-Type: application/json');
+    echo json_encode($response);
+}
+
+function upload_image()
+{
+    $image = $_FILES['file']['tmp_name'];
+    $image_name = str_replace(' ', '_', $_FILES['file']['name']);
+    $image_size = $_FILES['file']['size'];
+    $file_path = $_SERVER['DOCUMENT_ROOT'] . '/kotlin-assignment-nineteen/uploaded_image/';
+
+    if(empty($image_name)) {
+        $response = array(
+            'status' => 0,
+            'message' => "Upload Gambar Dulu"
+        );
+    } else {
+        $fileExt = strtolower(pathinfo($image_name, PATHINFO_EXTENSION));
+        $validExt = array('jpeg', 'jpg', 'png', 'webp');
+
+        if(in_array($fileExt, $validExt)) {
+            if (!file_exists($file_path)) {
+                mkdir($file_path, 0777, true);
+            }
+            if(!file_exists($file_path . $image_name)) {
+                if ($image_size < 5000000) {
+                    move_uploaded_file($image, $file_path . '/' . $image_name);
+                    $response = array(
+                        'status' => 1,
+                        'message' => "Succeed Upload Image",
+                        'file path' => $image_name
+                    );
+                } else {
+                    $response = array(
+                        'status' => 0,
+                        'message' => "Failed Upload (max 5 MB)",
+                        'file path' => $image_name
+                    );
+                }
+            } else {
+                $response = array(
+                    'status' => 0,
+                    'message' => "Failed Upload (file already exist)",
+                    'file path' => $image_name
+                );
+            }
+        } else {
+            $response = array(
+                'status' => 0,
+                'message' => "Failed Upload (invalid extension)",
+                'file path' => $image_name
+            );
+        }
+
     }
 
     header('Content-Type: application/json');
